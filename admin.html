@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>J2L FLOW · 관리자</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
+  :root{
+    --bg:#0f1117;--bg2:#181c27;--bg3:#1e2336;--panel:#242840;
+    --border:#2e3452;--accent:#4f7cff;--accent-glow:rgba(79,124,255,0.18);
+    --text:#e8eaf2;--text2:#8b90aa;--text3:#565b75;
+    --success:#3dd68c;--warning:#f5a623;--danger:#ff5c5c;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
+
+  /* ── HEADER ── */
+  header{position:sticky;top:0;z-index:100;background:rgba(15,17,23,0.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:56px;}
+  .logo{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:15px;color:var(--accent);}
+  .logo span{color:var(--text2);font-weight:400;}
+  .back-link{font-size:12px;color:var(--text3);text-decoration:none;padding:5px 12px;border:1px solid var(--border);border-radius:6px;transition:all .15s;}
+  .back-link:hover{color:var(--accent);border-color:var(--accent);}
+
+  /* ── TAB NAV ── */
+  .tab-nav{display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--bg2);padding:0 24px;}
+  .tab-nav-btn{background:none;border:none;border-bottom:2px solid transparent;padding:14px 20px;font-size:13px;font-weight:500;color:var(--text3);cursor:pointer;font-family:inherit;transition:all .15s;display:flex;align-items:center;gap:7px;margin-bottom:-1px;}
+  .tab-nav-btn:hover{color:var(--text2);}
+  .tab-nav-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+  /* ── TAB CONTENT ── */
+  .tab-content{display:none;}
+  .tab-content.active{display:block;}
+  .wrap{max-width:900px;margin:0 auto;padding:28px 24px;}
+
+  /* ── SECTION ── */
+  .section{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:22px;margin-bottom:20px;}
+  .section-title{font-size:14px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+
+  /* ── FORM ── */
+  .form-row{display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap;}
+  .form-group{flex:1;min-width:150px;}
+  .form-label{font-size:11px;color:var(--text3);margin-bottom:5px;display:block;font-weight:700;letter-spacing:.04em;}
+  .form-input,.form-textarea,.form-select{width:100%;padding:8px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:inherit;outline:none;transition:border-color .15s;}
+  .form-input:focus,.form-textarea:focus,.form-select:focus{border-color:var(--accent);}
+  .form-textarea{resize:vertical;min-height:80px;}
+  .form-select option{background:var(--bg2);}
+  .form-select:disabled{opacity:.45;cursor:not-allowed;}
+  .input-row{display:flex;gap:8px;align-items:flex-end;}
+  .input-row .form-input{margin-bottom:0;}
+
+  /* ── MASTER TABLE ── */
+  .master-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;}
+  .master-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+  .master-card-header{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+  .master-card-title{font-size:12px;font-weight:700;color:var(--text2);display:flex;align-items:center;gap:6px;}
+  .master-card-body{padding:10px 14px;}
+  .master-tag-list{display:flex;flex-direction:column;gap:4px;max-height:200px;overflow-y:auto;margin-bottom:10px;}
+  .master-tag-item{display:flex;align-items:center;justify-content:space-between;padding:5px 8px;border-radius:6px;background:var(--panel);font-size:12px;color:var(--text2);}
+  .master-tag-item:hover{background:var(--bg2);}
+  .master-tag-name{flex:1;}
+  .master-tag-sub{font-size:10px;color:var(--text3);margin-right:8px;font-family:'JetBrains Mono',monospace;}
+  .master-add-row{display:flex;gap:6px;}
+  .master-add-input{flex:1;padding:6px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;font-family:inherit;outline:none;}
+  .master-add-input:focus{border-color:var(--accent);}
+  .master-add-input::placeholder{color:var(--text3);}
+  .btn-add-sm{padding:6px 12px;border-radius:6px;border:none;background:var(--accent);color:#fff;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;}
+  .btn-add-sm:hover{filter:brightness(1.1);}
+  .empty-master{font-size:12px;color:var(--text3);padding:8px 0;text-align:center;}
+
+  /* 제품 마스터 */
+  .product-master-table{width:100%;border-collapse:collapse;}
+  .product-master-table th{text-align:left;font-size:11px;font-weight:600;color:var(--text3);padding:7px 10px;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.05em;}
+  .product-master-table td{padding:8px 10px;font-size:12px;border-bottom:1px solid rgba(46,52,82,.4);color:var(--text2);vertical-align:middle;}
+  .product-master-table tr:hover td{background:rgba(30,35,54,.5);}
+  .pm-model{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text3);}
+
+  /* ── 이미지 항목 ── */
+  .img-block{margin-bottom:14px;}
+  .img-block-label{font-size:12px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+  .img-entry-list{display:flex;flex-direction:column;gap:7px;margin-bottom:8px;}
+  .img-entry{display:flex;gap:8px;align-items:center;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:7px 12px;}
+  .img-entry-num{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text3);min-width:18px;}
+  .img-entry input{flex:1;background:transparent;border:none;color:var(--text);font-size:12px;font-family:'JetBrains Mono',monospace;outline:none;min-width:0;}
+  .img-entry input::placeholder{color:var(--text3);}
+  .img-entry-tag{font-size:10px;padding:2px 8px;border-radius:4px;font-weight:600;white-space:nowrap;}
+  .tag-diagram{background:rgba(79,124,255,.15);color:var(--accent);}
+  .tag-photo{background:rgba(61,214,140,.15);color:var(--success);}
+  .btn-icon{background:none;border:none;cursor:pointer;color:var(--text3);padding:2px;line-height:1;transition:color .12s;flex-shrink:0;}
+  .btn-icon:hover{color:var(--danger);}
+  .add-btn{display:flex;align-items:center;gap:6px;background:none;border:1px dashed var(--border);border-radius:8px;padding:7px 14px;color:var(--text3);font-size:12px;cursor:pointer;font-family:inherit;transition:all .15s;width:100%;justify-content:center;}
+  .add-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+  /* ── 제품 목록 ── */
+  .product-list{display:flex;flex-direction:column;gap:8px;}
+  .product-item{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:12px;}
+  .product-thumb{width:48px;height:48px;border-radius:6px;overflow:hidden;flex-shrink:0;background:var(--panel);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;}
+  .product-thumb img{width:100%;height:100%;object-fit:cover;}
+  .product-info{flex:1;min-width:0;}
+  .product-name{font-size:13px;font-weight:600;}
+  .product-meta{font-size:11px;color:var(--text3);margin-top:2px;}
+  .product-imgs{font-size:11px;color:var(--text3);margin-top:1px;font-family:'JetBrains Mono',monospace;}
+
+  /* ── 버튼 ── */
+  .btn{padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:all .15s;}
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-primary:hover{filter:brightness(1.1);}
+  .btn-outline{background:none;border:1px solid var(--border);color:var(--text2);}
+  .btn-outline:hover{border-color:var(--accent);color:var(--accent);}
+  .btn-danger{background:rgba(255,92,92,.1);border:1px solid rgba(255,92,92,.3);color:var(--danger);}
+  .btn-success{background:var(--success);color:#000;font-weight:700;}
+  .btn-success:hover{filter:brightness(1.08);}
+  .btn-sm{padding:5px 10px;font-size:11px;}
+
+  /* ── 기타 ── */
+  .divider{border:none;border-top:1px solid var(--border);margin:16px 0;}
+  .naming-guide{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:11px 14px;font-size:12px;color:var(--text2);line-height:1.8;margin-bottom:12px;}
+  .naming-guide code{background:var(--panel);padding:1px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;color:var(--accent);font-size:11px;}
+  .badge{display:inline-block;font-size:10px;padding:2px 7px;border-radius:4px;font-weight:600;vertical-align:middle;}
+  .badge-brand{background:rgba(124,92,255,.15);color:#a78bff;}
+  .badge-cat{background:rgba(245,166,35,.15);color:var(--warning);}
+  .info-box{background:rgba(61,214,140,.06);border:1px solid rgba(61,214,140,.2);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--text2);margin-bottom:14px;}
+  .info-box strong{color:var(--success);}
+  .code-block{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text2);overflow:auto;max-height:220px;white-space:pre;line-height:1.6;}
+  .empty-state{text-align:center;padding:28px;color:var(--text3);font-size:13px;}
+  .toast{position:fixed;bottom:24px;right:24px;z-index:999;background:var(--success);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:500;transform:translateY(60px);opacity:0;transition:all .25s;pointer-events:none;}
+  .toast.show{transform:translateY(0);opacity:1;}
+
+  /* 선택 표시 */
+  .selected-info{background:var(--accent-glow);border:1px solid rgba(79,124,255,.3);border-radius:8px;padding:8px 14px;font-size:12px;color:var(--accent);margin-bottom:14px;display:none;}
+  .selected-info.show{display:flex;align-items:center;gap:8px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">J2L<span>·</span>FLOW <span style="font-weight:300;font-size:12px;color:var(--text3)">관리자</span></div>
+  <a class="back-link" href="index.html">← 자료 탐색</a>
+</header>
+
+<!-- 탭 네비게이션 -->
+<div class="tab-nav">
+  <button class="tab-nav-btn active" onclick="switchTab('master')" id="tnMaster">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+    📋 마스터 관리
+  </button>
+  <button class="tab-nav-btn" onclick="switchTab('register')" id="tnRegister">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+    📝 자료 등록
+  </button>
+  <button class="tab-nav-btn" onclick="switchTab('export')" id="tnExport">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    📥 내보내기
+  </button>
+</div>
+
+<!-- ══════════════════════════════════════
+     탭 1: 마스터 관리
+══════════════════════════════════════ -->
+<div class="tab-content active" id="tabMaster">
+<div class="wrap">
+
+  <div class="info-box">
+    <strong>마스터 테이블</strong>은 브랜드 · 카테고리 · 제품 기본정보를 미리 등록해두는 곳입니다.
+    자료 등록 시 드롭다운으로 빠르게 선택할 수 있습니다.
+  </div>
+
+  <div class="master-grid">
+
+    <!-- 브랜드 마스터 -->
+    <div class="master-card">
+      <div class="master-card-header">
+        <div class="master-card-title">
+          <span class="badge badge-brand">BRAND</span> 브랜드
+        </div>
+        <span style="font-size:11px;color:var(--text3)" id="brandCount">0개</span>
+      </div>
+      <div class="master-card-body">
+        <div class="master-tag-list" id="brandTagList"></div>
+        <div class="master-add-row">
+          <input class="master-add-input" id="newBrand" placeholder="브랜드명 입력" onkeydown="if(event.key==='Enter')addBrand()">
+          <button class="btn-add-sm" onclick="addBrand()">추가</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 카테고리 마스터 -->
+    <div class="master-card">
+      <div class="master-card-header">
+        <div class="master-card-title">
+          <span class="badge badge-cat">CATEGORY</span> 카테고리
+        </div>
+        <span style="font-size:11px;color:var(--text3)" id="categoryCount">0개</span>
+      </div>
+      <div class="master-card-body">
+        <div class="master-tag-list" id="categoryTagList"></div>
+        <div class="master-add-row">
+          <input class="master-add-input" id="newCategory" placeholder="카테고리명 입력" onkeydown="if(event.key==='Enter')addCategory()">
+          <button class="btn-add-sm" onclick="addCategory()">추가</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 제품 마스터 -->
+  <div class="section" style="margin-top:20px;">
+    <div class="section-title"><div class="dot" style="background:var(--warning)"></div>제품 마스터 (<span id="pmCount">0</span>개)</div>
+
+    <div class="form-row" style="margin-bottom:16px;">
+      <div class="form-group">
+        <label class="form-label">브랜드 선택</label>
+        <select class="form-select" id="pmBrand" onchange="filterPmCategory()">
+          <option value="">-- 브랜드 선택 --</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">카테고리 선택</label>
+        <select class="form-select" id="pmCategory">
+          <option value="">-- 카테고리 선택 --</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">제품명</label>
+        <input class="form-input" id="pmName" placeholder="예: 에어프라이어 5.5L">
+      </div>
+      <div class="form-group">
+        <label class="form-label">모델명</label>
+        <input class="form-input" id="pmModel" placeholder="예: AF-550K">
+      </div>
+      <div style="display:flex;align-items:flex-end;padding-bottom:0;">
+        <button class="btn btn-primary" style="white-space:nowrap" onclick="addProductMaster()">＋ 제품 추가</button>
+      </div>
+    </div>
+
+    <div id="productMasterTableWrap">
+      <div class="empty-state">등록된 제품 마스터가 없습니다</div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     탭 2: 자료 등록
+══════════════════════════════════════ -->
+<div class="tab-content" id="tabRegister">
+<div class="wrap">
+
+  <!-- 선택 표시 -->
+  <div class="selected-info" id="selectedInfo">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+    <span id="selectedInfoText"></span>
+  </div>
+
+  <!-- 제품 선택 섹션 -->
+  <div class="section">
+    <div class="section-title"><div class="dot"></div>제품 선택 (마스터에서 불러오기)</div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">브랜드</label>
+        <select class="form-select" id="rBrand" onchange="onBrandChange()">
+          <option value="">-- 브랜드 선택 --</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">카테고리</label>
+        <select class="form-select" id="rCategory" onchange="onCategoryChange()" disabled>
+          <option value="">-- 카테고리 선택 --</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">제품명 / 모델명</label>
+        <select class="form-select" id="rProduct" onchange="onProductSelect()" disabled>
+          <option value="">-- 제품 선택 --</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- 선택된 제품 정보 표시 -->
+    <div id="rProductInfo" style="display:none;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--text2);">
+      <span id="rProductInfoText"></span>
+    </div>
+  </div>
+
+  <!-- 이미지 등록 -->
+  <div class="section">
+    <div class="section-title"><div class="dot" style="background:var(--warning)"></div>이미지 파일 경로 등록</div>
+
+    <div class="naming-guide">
+      💡 GitHub <code>images/</code> 폴더에 업로드한 파일명을 입력하세요.<br>
+      분해도: <code>images/AF-550K_diagram_01.jpg</code> &nbsp;|&nbsp;
+      수리사진: <code>images/AF-550K_repair_01.jpg</code>
+    </div>
+
+    <div class="img-block">
+      <div class="img-block-label" style="color:var(--accent)">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>
+        📐 분해도
+      </div>
+      <div class="img-entry-list" id="diagramList"></div>
+      <button class="add-btn" onclick="addImgEntry('diagram')">＋ 분해도 추가</button>
+    </div>
+
+    <div class="img-block">
+      <div class="img-block-label" style="color:var(--success)">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        📷 수리 사진
+      </div>
+      <div class="img-entry-list" id="photoList"></div>
+      <button class="add-btn" onclick="addImgEntry('photo')">＋ 수리 사진 추가</button>
+    </div>
+  </div>
+
+  <!-- 설명 / 부품 -->
+  <div class="section">
+    <div class="section-title"><div class="dot" style="background:var(--success)"></div>설명 및 부품 정보</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">제품 설명 / 수리 포인트</label>
+        <textarea class="form-textarea" id="rDesc" rows="5" placeholder="초보 엔지니어를 위한 설명&#13;&#10;- 주의사항&#13;&#10;- 자주 발생하는 고장 유형&#13;&#10;- 교체 부품 정보"></textarea>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">주요 부품 목록 — 번호,부품명,부품코드 (한 줄씩)</label>
+        <textarea class="form-textarea" id="rParts" rows="4" placeholder="1,실리콘 발판,SFP-001&#13;&#10;2,전면 판넬,FPN-002&#13;&#10;3,히팅 튜브,HTB-003"></textarea>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-primary" id="rSaveBtn" onclick="saveProduct()">💾 저장</button>
+      <button class="btn btn-outline" onclick="clearRegisterForm()">초기화</button>
+      <button class="btn btn-outline" id="rCancelBtn" onclick="cancelEdit()" style="display:none;border-color:var(--danger);color:var(--danger)">✕ 수정 취소</button>
+    </div>
+  </div>
+
+  <!-- 등록된 자료 목록 -->
+  <div class="section">
+    <div class="section-title"><div class="dot" style="background:var(--success)"></div>등록된 자료 (<span id="productCount">0</span>개)</div>
+    <div class="product-list" id="productList"></div>
+  </div>
+
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     탭 3: 내보내기
+══════════════════════════════════════ -->
+<div class="tab-content" id="tabExport">
+<div class="wrap">
+
+  <div class="section">
+    <div class="section-title"><div class="dot" style="background:var(--warning)"></div>data.json 내보내기</div>
+    <p style="font-size:12px;color:var(--text3);margin-bottom:16px;">
+      아래 파일을 GitHub 저장소 루트에 업로드하면 자동으로 배포됩니다.
+    </p>
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+      <button class="btn btn-success" onclick="downloadJson()">📥 data.json 다운로드</button>
+      <button class="btn btn-outline" onclick="copyJson()">📋 JSON 복사</button>
+    </div>
+    <div class="code-block" id="jsonPreview"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><div class="dot" style="background:var(--accent)"></div>마스터 데이터 백업</div>
+    <p style="font-size:12px;color:var(--text3);margin-bottom:16px;">
+      브랜드 · 카테고리 · 제품 마스터 데이터를 별도 파일로 백업합니다.<br>
+      다음 작업 시 이 파일을 불러오면 마스터 데이터가 복원됩니다.
+    </p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+      <button class="btn btn-primary" onclick="downloadMaster()">📥 master.json 다운로드</button>
+      <label class="btn btn-outline" style="cursor:pointer">
+        📂 master.json 불러오기
+        <input type="file" accept=".json" style="display:none" onchange="loadMaster(event)">
+      </label>
+    </div>
+    <div class="code-block" id="masterPreview"></div>
+  </div>
+
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════
+// 데이터
+// ══════════════════════════════════════
+let master = {
+  brands: [],       // ['드롱기', '쿠쿠', ...]
+  categories: [],   // ['에어프라이어', '커피머신', ...]
+  products: []      // [{id, brand, category, name, model}, ...]
+};
+let products = [];  // 자료 등록 데이터
+let editingIndex = -1;
+let editingProductId = null;
+
+// ══════════════════════════════════════
+// 초기화 — data.json + master.json 로드
+// ══════════════════════════════════════
+Promise.allSettled([
+  fetch('data.json').then(r=>r.json()),
+  fetch('master.json').then(r=>r.json())
+]).then(([dataRes, masterRes]) => {
+  if (dataRes.status==='fulfilled') {
+    products = dataRes.value.products || [];
+    showToast('data.json 로드 완료');
+  }
+  if (masterRes.status==='fulfilled') {
+    master = masterRes.value;
+    showToast('master.json 로드 완료');
+  }
+  renderAll();
+});
+
+function renderAll() {
+  renderBrandList();
+  renderCategoryList();
+  renderProductMasterTable();
+  renderProductList();
+  updateSelectDropdowns();
+  updateJsonPreview();
+  updateMasterPreview();
+}
+
+// ══════════════════════════════════════
+// 탭 전환
+// ══════════════════════════════════════
+function switchTab(tab) {
+  ['master','register','export'].forEach(t => {
+    document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active', t===tab);
+    document.getElementById('tn'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active', t===tab);
+  });
+  if (tab==='export') { updateJsonPreview(); updateMasterPreview(); }
+}
+
+// ══════════════════════════════════════
+// 마스터 — 브랜드
+// ══════════════════════════════════════
+function addBrand() {
+  const val = document.getElementById('newBrand').value.trim();
+  if (!val) return;
+  if (master.brands.includes(val)) { showToast('이미 등록된 브랜드입니다','error'); return; }
+  master.brands.push(val);
+  document.getElementById('newBrand').value='';
+  renderBrandList();
+  updateSelectDropdowns();
+  showToast(`브랜드 "${val}" 추가`);
+}
+function deleteBrand(i) {
+  if (!confirm(`"${master.brands[i]}" 브랜드를 삭제하시겠어요?\n해당 브랜드의 제품 마스터도 함께 삭제됩니다.`)) return;
+  const name = master.brands[i];
+  master.brands.splice(i,1);
+  master.products = master.products.filter(p=>p.brand!==name);
+  renderBrandList();
+  renderProductMasterTable();
+  updateSelectDropdowns();
+}
+function renderBrandList() {
+  const list = document.getElementById('brandTagList');
+  document.getElementById('brandCount').textContent = master.brands.length+'개';
+  if (!master.brands.length) { list.innerHTML='<div class="empty-master">등록된 브랜드 없음</div>'; return; }
+  list.innerHTML = master.brands.map((b,i)=>`
+    <div class="master-tag-item">
+      <span class="master-tag-name">${b}</span>
+      <button class="btn-icon" onclick="deleteBrand(${i})" title="삭제">
+        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════
+// 마스터 — 카테고리
+// ══════════════════════════════════════
+function addCategory() {
+  const val = document.getElementById('newCategory').value.trim();
+  if (!val) return;
+  if (master.categories.includes(val)) { showToast('이미 등록된 카테고리입니다','error'); return; }
+  master.categories.push(val);
+  document.getElementById('newCategory').value='';
+  renderCategoryList();
+  updateSelectDropdowns();
+  showToast(`카테고리 "${val}" 추가`);
+}
+function deleteCategory(i) {
+  if (!confirm(`"${master.categories[i]}" 카테고리를 삭제하시겠어요?`)) return;
+  const name = master.categories[i];
+  master.categories.splice(i,1);
+  master.products = master.products.filter(p=>p.category!==name);
+  renderCategoryList();
+  renderProductMasterTable();
+  updateSelectDropdowns();
+}
+function renderCategoryList() {
+  const list = document.getElementById('categoryTagList');
+  document.getElementById('categoryCount').textContent = master.categories.length+'개';
+  if (!master.categories.length) { list.innerHTML='<div class="empty-master">등록된 카테고리 없음</div>'; return; }
+  list.innerHTML = master.categories.map((c,i)=>`
+    <div class="master-tag-item">
+      <span class="master-tag-name">${c}</span>
+      <button class="btn-icon" onclick="deleteCategory(${i})" title="삭제">
+        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════
+// 마스터 — 제품
+// ══════════════════════════════════════
+function filterPmCategory() {
+  const brand = document.getElementById('pmBrand').value;
+  // 카테고리는 전체 목록 사용 (브랜드 제한 없음)
+}
+
+function addProductMaster() {
+  const brand    = document.getElementById('pmBrand').value;
+  const category = document.getElementById('pmCategory').value;
+  const name     = document.getElementById('pmName').value.trim();
+  const model    = document.getElementById('pmModel').value.trim();
+  if (!brand||!category||!name) { showToast('브랜드, 카테고리, 제품명은 필수입니다','error'); return; }
+  const dup = master.products.find(p=>p.brand===brand&&p.model===model&&model!=='');
+  if (dup) { showToast('동일한 모델명이 이미 등록되어 있습니다','error'); return; }
+  master.products.push({ id: Date.now(), brand, category, name, model });
+  document.getElementById('pmName').value='';
+  document.getElementById('pmModel').value='';
+  renderProductMasterTable();
+  updateSelectDropdowns();
+  showToast(`"${name}" 제품 마스터 추가`);
+}
+
+function deleteProductMaster(i) {
+  if (!confirm(`"${master.products[i].name}" 제품을 마스터에서 삭제할까요?`)) return;
+  master.products.splice(i,1);
+  renderProductMasterTable();
+  updateSelectDropdowns();
+  showToast('삭제되었습니다');
+}
+
+function renderProductMasterTable() {
+  document.getElementById('pmCount').textContent = master.products.length;
+  const wrap = document.getElementById('productMasterTableWrap');
+  if (!master.products.length) { wrap.innerHTML='<div class="empty-state">등록된 제품 마스터가 없습니다</div>'; return; }
+  const rows = master.products.map((p,i)=>`
+    <tr>
+      <td><span class="badge badge-brand">${p.brand}</span></td>
+      <td><span class="badge badge-cat">${p.category}</span></td>
+      <td style="font-weight:600;color:var(--text)">${p.name}</td>
+      <td class="pm-model">${p.model||'-'}</td>
+      <td>
+        <button class="btn btn-danger btn-sm" onclick="deleteProductMaster(${i})">삭제</button>
+      </td>
+    </tr>`).join('');
+  wrap.innerHTML=`<table class="product-master-table">
+    <thead><tr><th>브랜드</th><th>카테고리</th><th>제품명</th><th>모델명</th><th></th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+// ══════════════════════════════════════
+// 자료 등록 — 드롭다운 연동
+// ══════════════════════════════════════
+function updateSelectDropdowns() {
+  // 마스터 탭 — 브랜드/카테고리 셀렉트
+  const pmBrand = document.getElementById('pmBrand');
+  const pmCat   = document.getElementById('pmCategory');
+  const prev1 = pmBrand.value;
+  pmBrand.innerHTML = '<option value="">-- 브랜드 선택 --</option>' +
+    master.brands.map(b=>`<option value="${b}"${b===prev1?' selected':''}>${b}</option>`).join('');
+  pmCat.innerHTML = '<option value="">-- 카테고리 선택 --</option>' +
+    master.categories.map(c=>`<option value="${c}">${c}</option>`).join('');
+
+  // 자료 등록 탭 — 브랜드 셀렉트
+  const rBrand = document.getElementById('rBrand');
+  const prev2 = rBrand.value;
+  rBrand.innerHTML = '<option value="">-- 브랜드 선택 --</option>' +
+    master.brands.map(b=>`<option value="${b}"${b===prev2?' selected':''}>${b}</option>`).join('');
+  if (prev2) onBrandChange(true);
+}
+
+function onBrandChange(keepValue=false) {
+  const brand = document.getElementById('rBrand').value;
+  const rCat  = document.getElementById('rCategory');
+  const rProd = document.getElementById('rProduct');
+  rCat.innerHTML = '<option value="">-- 카테고리 선택 --</option>';
+  rProd.innerHTML = '<option value="">-- 제품 선택 --</option>';
+  rCat.disabled  = !brand;
+  rProd.disabled = true;
+  if (!brand) { hideProductInfo(); return; }
+  // 해당 브랜드의 카테고리만 추출
+  const cats = [...new Set(master.products.filter(p=>p.brand===brand).map(p=>p.category))];
+  rCat.innerHTML = '<option value="">-- 카테고리 선택 --</option>' +
+    cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+  hideProductInfo();
+}
+
+function onCategoryChange() {
+  const brand    = document.getElementById('rBrand').value;
+  const category = document.getElementById('rCategory').value;
+  const rProd    = document.getElementById('rProduct');
+  rProd.innerHTML = '<option value="">-- 제품 선택 --</option>';
+  rProd.disabled = !category;
+  if (!category) { hideProductInfo(); return; }
+  const prods = master.products.filter(p=>p.brand===brand && p.category===category);
+  rProd.innerHTML = '<option value="">-- 제품 선택 --</option>' +
+    prods.map(p=>`<option value="${p.id}">${p.name}${p.model?' ('+p.model+')':''}</option>`).join('');
+  hideProductInfo();
+}
+
+function onProductSelect() {
+  const pid = document.getElementById('rProduct').value;
+  if (!pid) { hideProductInfo(); return; }
+  const p = master.products.find(p=>String(p.id)===pid);
+  if (!p) return;
+  const info = document.getElementById('rProductInfo');
+  document.getElementById('rProductInfoText').innerHTML =
+    `✅ 선택됨 &nbsp;|&nbsp; <strong style="color:var(--text)">${p.brand}</strong> &nbsp;›&nbsp; ${p.category} &nbsp;›&nbsp; <strong style="color:var(--text)">${p.name}</strong>${p.model?' &nbsp;<span style="font-family:JetBrains Mono,monospace;font-size:11px;color:var(--text3)">('+p.model+')</span>':''}`;
+  info.style.display='block';
+  const sel = document.getElementById('selectedInfo');
+  document.getElementById('selectedInfoText').textContent = `${p.brand} · ${p.category} · ${p.name}${p.model?' · '+p.model:''}`;
+  sel.classList.add('show');
+}
+
+function hideProductInfo() {
+  document.getElementById('rProductInfo').style.display='none';
+  document.getElementById('selectedInfo').classList.remove('show');
+}
+
+// ══════════════════════════════════════
+// 자료 등록 — 이미지 항목
+// ══════════════════════════════════════
+function addImgEntry(type) {
+  const listId = type==='diagram' ? 'diagramList' : 'photoList';
+  const list = document.getElementById(listId);
+  const idx = list.children.length;
+  const tagHtml = type==='diagram'
+    ? `<span class="img-entry-tag tag-diagram">분해도</span>`
+    : `<span class="img-entry-tag tag-photo">수리사진</span>`;
+  const entry = document.createElement('div');
+  entry.className='img-entry';
+  entry.dataset.type=type;
+  entry.innerHTML=`
+    <span class="img-entry-num">${idx+1}</span>
+    ${tagHtml}
+    <input type="text" placeholder="images/파일명.jpg" data-imgtype="${type}">
+    <button class="btn-icon" onclick="removeImgEntry(this)" title="삭제">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>`;
+  list.appendChild(entry);
+  reNumberList(listId);
+}
+function removeImgEntry(btn) {
+  const entry=btn.closest('.img-entry');
+  const listId=entry.dataset.type==='diagram'?'diagramList':'photoList';
+  entry.remove();
+  reNumberList(listId);
+}
+function reNumberList(listId) {
+  document.querySelectorAll(`#${listId} .img-entry-num`).forEach((el,i)=>el.textContent=i+1);
+}
+function getImageEntries() {
+  const images=[];
+  document.querySelectorAll('#diagramList input').forEach(inp=>{const v=inp.value.trim();if(v)images.push({tag:'분해도',file:v});});
+  document.querySelectorAll('#photoList input').forEach(inp=>{const v=inp.value.trim();if(v)images.push({tag:'수리사진',file:v});});
+  return images;
+}
+function setImageEntries(images) {
+  document.getElementById('diagramList').innerHTML='';
+  document.getElementById('photoList').innerHTML='';
+  const diagrams=images.filter(i=>i.tag==='분해도');
+  const photos=images.filter(i=>i.tag==='수리사진');
+  (diagrams.length?diagrams:[null]).forEach(()=>addImgEntry('diagram'));
+  (photos.length?photos:[null]).forEach(()=>addImgEntry('photo'));
+  document.querySelectorAll('#diagramList input').forEach((inp,i)=>{if(diagrams[i])inp.value=diagrams[i].file;});
+  document.querySelectorAll('#photoList input').forEach((inp,i)=>{if(photos[i])inp.value=photos[i].file;});
+}
+
+// ══════════════════════════════════════
+// 자료 등록 — 저장
+// ══════════════════════════════════════
+function saveProduct() {
+  const pid = document.getElementById('rProduct').value;
+  if (!pid && editingProductId===null) { showToast('제품을 선택해주세요','error'); return; }
+
+  const masterProduct = master.products.find(p=>String(p.id)===(pid||String(editingProductId)));
+  if (!masterProduct) { showToast('제품 정보를 찾을 수 없습니다','error'); return; }
+
+  const images  = getImageEntries();
+  const desc    = document.getElementById('rDesc').value.trim();
+  const partsRaw= document.getElementById('rParts').value.trim();
+  const parts   = partsRaw?partsRaw.split('\n').filter(Boolean).map(line=>{
+    const [num,pname,code]=(line+',,,').split(',');
+    return {num:num.trim(),name:pname.trim(),code:code.trim()};
+  }).filter(p=>p.name):[];
+
+  const record = {
+    id: editingIndex>=0 ? products[editingIndex].id : Date.now(),
+    brand: masterProduct.brand,
+    category: masterProduct.category,
+    name: masterProduct.name,
+    model: masterProduct.model,
+    masterId: masterProduct.id,
+    desc, parts, images
+  };
+
+  if (editingIndex>=0) {
+    products[editingIndex]=record;
+    showToast(`"${record.name}" 수정 완료!`);
+    cancelEdit();
+  } else {
+    products.push(record);
+    showToast(`"${record.name}" 등록 완료!`);
+    clearRegisterForm();
+  }
+  renderProductList();
+  updateJsonPreview();
+}
+
+// ══════════════════════════════════════
+// 자료 등록 — 수정/삭제
+// ══════════════════════════════════════
+function editProduct(i) {
+  const p=products[i];
+  editingIndex=i;
+  editingProductId=p.masterId||null;
+  // 드롭다운 선택
+  document.getElementById('rBrand').value=p.brand||'';
+  onBrandChange(true);
+  setTimeout(()=>{
+    document.getElementById('rCategory').value=p.category||'';
+    onCategoryChange();
+    setTimeout(()=>{
+      document.getElementById('rProduct').value=String(p.masterId||'');
+      onProductSelect();
+    },50);
+  },50);
+  document.getElementById('rDesc').value=p.desc||'';
+  document.getElementById('rParts').value=(p.parts||[]).map(pt=>`${pt.num},${pt.name},${pt.code||''}`).join('\n');
+  setImageEntries(p.images||[]);
+  document.getElementById('rSaveBtn').textContent='✏️ 수정 저장';
+  document.getElementById('rCancelBtn').style.display='';
+  document.getElementById('rBrand').scrollIntoView({behavior:'smooth',block:'center'});
+  showToast(`"${p.name}" 수정 모드`);
+}
+
+function cancelEdit() {
+  editingIndex=-1; editingProductId=null;
+  clearRegisterForm();
+  document.getElementById('rSaveBtn').textContent='💾 저장';
+  document.getElementById('rCancelBtn').style.display='none';
+}
+
+function clearRegisterForm() {
+  document.getElementById('rBrand').value='';
+  document.getElementById('rCategory').innerHTML='<option value="">-- 카테고리 선택 --</option>';
+  document.getElementById('rCategory').disabled=true;
+  document.getElementById('rProduct').innerHTML='<option value="">-- 제품 선택 --</option>';
+  document.getElementById('rProduct').disabled=true;
+  document.getElementById('rDesc').value='';
+  document.getElementById('rParts').value='';
+  document.getElementById('diagramList').innerHTML='';
+  document.getElementById('photoList').innerHTML='';
+  addImgEntry('diagram');
+  addImgEntry('photo');
+  hideProductInfo();
+}
+
+function deleteProduct(i) {
+  if (!confirm(`"${products[i].name}" 자료를 삭제하시겠어요?`)) return;
+  products.splice(i,1);
+  renderProductList();
+  updateJsonPreview();
+  showToast('삭제되었습니다');
+}
+
+// ══════════════════════════════════════
+// 자료 목록 렌더
+// ══════════════════════════════════════
+function renderProductList() {
+  document.getElementById('productCount').textContent=products.length;
+  const list=document.getElementById('productList');
+  if (!products.length){list.innerHTML=`<div class="empty-state">등록된 자료가 없습니다</div>`;return;}
+  list.innerHTML=products.map((p,i)=>{
+    const diagrams=(p.images||[]).filter(img=>img.tag==='분해도');
+    const photos=(p.images||[]).filter(img=>img.tag==='수리사진');
+    return `<div class="product-item">
+      <div class="product-thumb">📦</div>
+      <div class="product-info">
+        <div class="product-name">${p.brand} · ${p.name}${p.model?' <span style="font-family:JetBrains Mono,monospace;font-size:11px;color:var(--text3)">('+p.model+')</span>':''}</div>
+        <div class="product-meta">${p.category}</div>
+        <div class="product-imgs">분해도 ${diagrams.length}장 · 수리사진 ${photos.length}장</div>
+      </div>
+      <button class="btn btn-outline btn-sm" style="margin-right:4px" onclick="editProduct(${i})">✏️ 수정</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteProduct(${i})">삭제</button>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════
+// 내보내기
+// ══════════════════════════════════════
+function getJsonText() { return JSON.stringify({products},null,2); }
+function getMasterText() { return JSON.stringify(master,null,2); }
+
+function updateJsonPreview() { document.getElementById('jsonPreview').textContent=getJsonText(); }
+function updateMasterPreview() { document.getElementById('masterPreview').textContent=getMasterText(); }
+
+function downloadJson() {
+  if (!products.length){showToast('등록된 자료가 없습니다','error');return;}
+  download('data.json', getJsonText(), 'application/json');
+  showToast('data.json 저장 완료!');
+}
+function downloadMaster() {
+  download('master.json', getMasterText(), 'application/json');
+  showToast('master.json 저장 완료!');
+}
+function copyJson() {
+  navigator.clipboard.writeText(getJsonText());
+  showToast('JSON 복사 완료!');
+}
+function download(filename, text, type) {
+  const blob=new Blob([text],{type:type+';charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=filename;
+  a.click();
+}
+function loadMaster(e) {
+  const file=e.target.files[0];
+  if (!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try {
+      master=JSON.parse(ev.target.result);
+      renderAll();
+      showToast('master.json 불러오기 완료!');
+    } catch { showToast('파일 형식이 올바르지 않습니다','error'); }
+  };
+  reader.readAsText(file);
+}
+
+// ══════════════════════════════════════
+// 초기 입력 행 추가
+// ══════════════════════════════════════
+addImgEntry('diagram');
+addImgEntry('photo');
+
+// ══════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════
+function showToast(msg,type) {
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.style.background=type==='error'?'var(--danger)':'var(--success)';
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+</script>
+</body>
+</html>

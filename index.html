@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>J2L FLOW · 엔지니어 기술 자료실</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
+  :root {
+    --bg:#0f1117;--bg2:#181c27;--bg3:#1e2336;--panel:#242840;
+    --border:#2e3452;--accent:#4f7cff;--accent-glow:rgba(79,124,255,0.18);
+    --text:#e8eaf2;--text2:#8b90aa;--text3:#565b75;
+    --success:#3dd68c;--warning:#f5a623;--danger:#ff5c5c;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
+
+  header{position:sticky;top:0;z-index:100;background:rgba(15,17,23,0.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:56px;}
+  .logo{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:15px;color:var(--accent);}
+  .logo span{color:var(--text2);font-weight:400;}
+  .header-right{display:flex;align-items:center;gap:12px;}
+  .admin-link{font-size:12px;color:var(--text3);text-decoration:none;padding:5px 12px;border:1px solid var(--border);border-radius:6px;transition:all .15s;}
+  .admin-link:hover{color:var(--accent);border-color:var(--accent);}
+
+  .app{display:flex;min-height:calc(100vh - 56px);}
+
+  /* SIDEBAR */
+  .sidebar{width:240px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);padding:16px 0;overflow-y:auto;position:sticky;top:56px;height:calc(100vh - 56px);}
+  .sidebar-label{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;padding:0 16px 6px;}
+  .brand-item{padding:8px 16px;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text2);border-left:3px solid transparent;transition:all .12s;}
+  .brand-item:hover{background:var(--bg3);color:var(--text);}
+  .brand-item.active{background:var(--accent-glow);color:var(--accent);border-left-color:var(--accent);}
+  .brand-icon{width:24px;height:24px;border-radius:6px;background:var(--panel);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+  .category-list{padding:0 8px;}
+  .cat-item{padding:6px 12px;cursor:pointer;font-size:12px;color:var(--text2);border-radius:6px;transition:all .12s;display:flex;align-items:center;justify-content:space-between;}
+  .cat-item:hover{background:var(--bg3);color:var(--text);}
+  .cat-item.active{background:var(--accent-glow);color:var(--accent);}
+  .cat-count{font-size:11px;color:var(--text3);background:var(--bg3);padding:1px 6px;border-radius:10px;}
+
+  /* MAIN */
+  .main{flex:1;overflow-y:auto;}
+  .search-bar{padding:16px 24px;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:10;}
+  .search-wrap{position:relative;max-width:560px;}
+  .search-wrap svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none;}
+  #searchInput{width:100%;padding:9px 14px 9px 40px;background:var(--bg3);border:1px solid var(--border);border-radius:9px;color:var(--text);font-size:14px;font-family:inherit;outline:none;transition:border-color .15s;}
+  #searchInput:focus{border-color:var(--accent);}
+  #searchInput::placeholder{color:var(--text3);}
+
+  .grid-area{padding:20px 24px;}
+  .grid-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .grid-title{font-size:15px;font-weight:700;}
+  .grid-count{font-size:12px;color:var(--text3);}
+  .product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;}
+
+  .product-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;transition:all .18s;}
+  .product-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 24px rgba(79,124,255,.15);}
+  .card-thumb{height:130px;background:var(--panel);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+  .card-thumb img{width:100%;height:100%;object-fit:contain;padding:10px;}
+  .card-thumb .no-img{color:var(--text3);font-size:11px;text-align:center;}
+  .card-badge{position:absolute;top:7px;right:7px;background:rgba(15,17,23,.85);border:1px solid var(--border);border-radius:5px;padding:2px 6px;font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;}
+  .card-body{padding:12px;}
+  .card-brand{font-size:10px;color:var(--accent);font-weight:700;letter-spacing:.06em;text-transform:uppercase;}
+  .card-name{font-size:13px;font-weight:600;margin-top:2px;line-height:1.4;}
+  .card-model{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-top:3px;}
+
+  /* MODAL */
+  .modal-overlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s;}
+  .modal-overlay.open{opacity:1;pointer-events:all;}
+  .modal{background:var(--bg2);border:1px solid var(--border);border-radius:16px;width:100%;max-width:980px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;transform:translateY(10px);transition:transform .2s;}
+  .modal-overlay.open .modal{transform:translateY(0);}
+  .modal-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0;}
+  .modal-brand{font-size:11px;color:var(--accent);font-weight:700;letter-spacing:.06em;text-transform:uppercase;}
+  .modal-title{font-size:18px;font-weight:700;margin-top:2px;}
+  .modal-model{font-size:12px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-top:3px;}
+  .close-btn{background:var(--panel);border:1px solid var(--border);border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);flex-shrink:0;transition:all .12s;}
+  .close-btn:hover{background:var(--bg3);color:var(--text);}
+  .modal-body{display:flex;flex:1;overflow:hidden;}
+  .modal-tabs{display:flex;flex-direction:column;width:140px;flex-shrink:0;border-right:1px solid var(--border);padding:12px 8px;gap:4px;}
+  .tab-btn{background:none;border:none;cursor:pointer;color:var(--text2);font-size:12px;font-weight:500;padding:8px 10px;border-radius:8px;text-align:left;font-family:inherit;transition:all .12s;display:flex;align-items:center;gap:8px;}
+  .tab-btn:hover{background:var(--bg3);color:var(--text);}
+  .tab-btn.active{background:var(--accent-glow);color:var(--accent);}
+  .modal-content{flex:1;overflow-y:auto;padding:20px;}
+
+  .img-viewer{background:var(--panel);border-radius:10px;overflow:hidden;margin-bottom:10px;display:flex;align-items:center;justify-content:center;min-height:280px;position:relative;}
+  .img-viewer img{width:100%;object-fit:contain;cursor:zoom-in;transition:transform .25s;max-height:58vh;}
+  .img-viewer img.zoomed{cursor:zoom-out;transform:scale(1.85);}
+  .img-viewer .img-loading{color:var(--text3);font-size:12px;}
+  .img-caption{font-size:11px;color:var(--text3);text-align:center;margin-bottom:14px;}
+  .img-thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+  .img-thumb{width:64px;height:64px;border-radius:7px;overflow:hidden;border:2px solid transparent;cursor:pointer;transition:border-color .12s;background:var(--panel);flex-shrink:0;}
+  .img-thumb img{width:100%;height:100%;object-fit:cover;}
+  .img-thumb.active{border-color:var(--accent);}
+
+  .desc-heading{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+  .desc-text{font-size:13px;color:var(--text2);line-height:1.8;white-space:pre-wrap;}
+  .parts-table{width:100%;border-collapse:collapse;}
+  .parts-table th{text-align:left;font-size:11px;font-weight:600;color:var(--text3);padding:6px 10px;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.06em;}
+  .parts-table td{padding:8px 10px;font-size:12px;border-bottom:1px solid rgba(46,52,82,.4);color:var(--text2);}
+  .parts-table tr:hover td{background:var(--bg3);}
+  .part-num{font-family:'JetBrains Mono',monospace;color:var(--accent);font-size:11px;}
+
+  .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;color:var(--text3);text-align:center;gap:10px;}
+  .empty-state svg{opacity:.35;}
+  .empty-state h3{font-size:14px;color:var(--text2);}
+  .empty-state p{font-size:12px;}
+
+  .loading-wrap{display:flex;align-items:center;justify-content:center;height:200px;color:var(--text3);font-size:13px;gap:10px;}
+
+  @media(max-width:700px){
+    .sidebar{display:none;}
+    .modal-body{flex-direction:column;}
+    .modal-tabs{flex-direction:row;width:100%;border-right:none;border-bottom:1px solid var(--border);overflow-x:auto;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">J2L<span>·</span>FLOW <span style="font-weight:300;font-size:12px;color:var(--text3)">엔지니어 기술자료실</span></div>
+  <div class="header-right">
+    <a class="admin-link" href="admin.html">⚙️ 관리자</a>
+  </div>
+</header>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-label">브랜드</div>
+    <div id="brandList"></div>
+  </aside>
+
+  <main class="main">
+    <div class="search-bar">
+      <div class="search-wrap">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input id="searchInput" type="text" placeholder="제품명, 모델명, 부품명 검색..." oninput="renderGrid()">
+      </div>
+    </div>
+    <div class="grid-area">
+      <div class="grid-header">
+        <div class="grid-title" id="gridTitle">전체 제품</div>
+        <div class="grid-count" id="gridCount"></div>
+      </div>
+      <div id="productGrid" class="product-grid"></div>
+    </div>
+  </main>
+</div>
+
+<!-- 상세 모달 -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-brand" id="mBrand"></div>
+        <div class="modal-title" id="mName"></div>
+        <div class="modal-model" id="mModel"></div>
+      </div>
+      <button class="close-btn" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-tabs">
+        <button class="tab-btn active" onclick="switchTab('diagram')" id="tabDiagram">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>분해도
+        </button>
+        <button class="tab-btn" onclick="switchTab('photos')" id="tabPhotos">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>수리 사진
+        </button>
+        <button class="tab-btn" onclick="switchTab('desc')" id="tabDesc">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>설명 문서
+        </button>
+        <button class="tab-btn" onclick="switchTab('parts')" id="tabParts">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>부품 목록
+        </button>
+      </div>
+      <div class="modal-content" id="modalContent"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let products = [];
+let selectedBrand = null;
+let selectedCategory = null;
+let currentProduct = null;
+let currentTab = 'diagram';
+
+// data.json 로드
+fetch('data.json')
+  .then(r => r.json())
+  .then(data => {
+    products = data.products || [];
+    renderSidebar();
+    renderGrid();
+  })
+  .catch(() => {
+    document.getElementById('productGrid').innerHTML =
+      `<div class="empty-state" style="grid-column:1/-1">
+        <h3>data.json을 불러올 수 없습니다</h3>
+        <p>GitHub Pages에서 실행하거나 관리자 페이지에서 data.json을 생성해주세요</p>
+      </div>`;
+  });
+
+function renderSidebar() {
+  const brands = {};
+  products.forEach(p => {
+    if (!brands[p.brand]) brands[p.brand] = {};
+    brands[p.brand][p.category] = (brands[p.brand][p.category]||0)+1;
+  });
+  const bl = document.getElementById('brandList');
+  bl.innerHTML = '';
+  const all = document.createElement('div');
+  all.className = 'brand-item'+(selectedBrand?'':' active');
+  all.innerHTML = `<div class="brand-icon">🔍</div>전체 보기`;
+  all.onclick = ()=>{selectedBrand=null;selectedCategory=null;renderSidebar();renderGrid();};
+  bl.appendChild(all);
+  Object.entries(brands).forEach(([brand,cats])=>{
+    const bi = document.createElement('div');
+    bi.className = 'brand-item'+(selectedBrand===brand?' active':'');
+    bi.innerHTML = `<div class="brand-icon">${brand[0]}</div>${brand}`;
+    bi.onclick = ()=>{selectedBrand=brand;selectedCategory=null;renderSidebar();renderGrid();};
+    bl.appendChild(bi);
+    if (selectedBrand===brand) {
+      const cl = document.createElement('div');
+      cl.className = 'category-list';
+      Object.entries(cats).forEach(([cat,cnt])=>{
+        const ci = document.createElement('div');
+        ci.className = 'cat-item'+(selectedCategory===cat?' active':'');
+        ci.innerHTML = `<span>└ ${cat}</span><span class="cat-count">${cnt}</span>`;
+        ci.onclick = e=>{e.stopPropagation();selectedCategory=cat;renderSidebar();renderGrid();};
+        cl.appendChild(ci);
+      });
+      bl.appendChild(cl);
+    }
+  });
+}
+
+function renderGrid() {
+  const q = (document.getElementById('searchInput').value||'').trim().toLowerCase();
+  let data = products.slice();
+  if (selectedBrand) data = data.filter(p=>p.brand===selectedBrand);
+  if (selectedCategory) data = data.filter(p=>p.category===selectedCategory);
+  if (q) data = data.filter(p=>[p.brand,p.category,p.name,p.model,p.desc,...(p.parts||[]).map(pt=>pt.name)].join(' ').toLowerCase().includes(q));
+
+  document.getElementById('gridTitle').textContent = selectedCategory||selectedBrand||'전체 제품';
+  document.getElementById('gridCount').textContent = data.length+'개';
+
+  const grid = document.getElementById('productGrid');
+  if (!data.length) {
+    grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1"><svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><h3>검색 결과 없음</h3><p>다른 키워드로 검색해보세요</p></div>`;
+    return;
+  }
+  grid.innerHTML='';
+  data.forEach(p=>{
+    const diagrams = (p.images||[]).filter(i=>i.tag==='분해도');
+    const totalImgs = (p.images||[]).length;
+    const card = document.createElement('div');
+    card.className='product-card';
+    card.innerHTML=`
+      <div class="card-thumb">
+        ${diagrams[0]
+          ? `<img src="${diagrams[0].file}" alt="${p.name}" loading="lazy" onerror="this.parentNode.innerHTML='<div class=no-img>이미지 없음</div>'">`
+          : `<div class="no-img"><svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>`}
+        <div class="card-badge">${totalImgs}장</div>
+      </div>
+      <div class="card-body">
+        <div class="card-brand">${p.brand}</div>
+        <div class="card-name">${p.name}</div>
+        <div class="card-model">${p.model||'-'}</div>
+      </div>`;
+    card.onclick=()=>openModal(p);
+    grid.appendChild(card);
+  });
+}
+
+function openModal(p) {
+  currentProduct=p; currentTab='diagram';
+  document.getElementById('mBrand').textContent=`${p.brand} · ${p.category}`;
+  document.getElementById('mName').textContent=p.name;
+  document.getElementById('mModel').textContent=p.model||'';
+  switchTab('diagram');
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('open');}
+function closeModalOutside(e){if(e.target===document.getElementById('modalOverlay'))closeModal();}
+
+function switchTab(tab) {
+  currentTab=tab;
+  ['diagram','photos','desc','parts'].forEach(t=>{
+    document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active',t===tab);
+  });
+  const c=document.getElementById('modalContent');
+  const p=currentProduct;
+  if (tab==='diagram') {
+    const imgs=(p.images||[]).filter(i=>i.tag==='분해도');
+    c.innerHTML = imgs.length ? renderViewer(imgs,'분해도') : emptyTab('분해도');
+  } else if (tab==='photos') {
+    const imgs=(p.images||[]).filter(i=>i.tag==='수리사진');
+    c.innerHTML = imgs.length ? renderViewer(imgs,'수리 사진') : emptyTab('수리 사진');
+  } else if (tab==='desc') {
+    c.innerHTML=`<div class="desc-heading">제품 설명 · 수리 포인트</div><div class="desc-text" style="margin-top:10px">${p.desc||'등록된 설명이 없습니다.'}</div>`;
+  } else {
+    if (!p.parts||!p.parts.length){c.innerHTML=emptyTab('부품 목록');return;}
+    const rows=p.parts.map(pt=>`<tr><td class="part-num">${pt.num||''}</td><td>${pt.name}</td><td class="part-num">${pt.code||'-'}</td></tr>`).join('');
+    c.innerHTML=`<div class="desc-heading" style="margin-bottom:12px">주요 부품 목록</div><table class="parts-table"><thead><tr><th>번호</th><th>부품명</th><th>코드</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+  const img=c.querySelector('.img-viewer img');
+  if(img) img.onclick=()=>img.classList.toggle('zoomed');
+}
+
+function renderViewer(images, label) {
+  const thumbs = images.map((img,i)=>`
+    <div class="img-thumb ${i===0?'active':''}" onclick="switchImg(${i})" id="thumb_${i}">
+      <img src="${img.file}" loading="lazy" onerror="this.src=''">
+    </div>`).join('');
+  return `
+    <div class="img-viewer"><img src="${images[0].file}" id="mainImg" alt="${label}"></div>
+    <div class="img-caption">${label} · 클릭하면 확대 / 썸네일로 전환</div>
+    ${images.length>1?`<div class="img-thumbs">${thumbs}</div>`:''}`;
+}
+function switchImg(idx) {
+  const imgs = (currentTab==='diagram')
+    ? (currentProduct.images||[]).filter(i=>i.tag==='분해도')
+    : (currentProduct.images||[]).filter(i=>i.tag==='수리사진');
+  document.getElementById('mainImg').src = imgs[idx].file;
+  document.querySelectorAll('.img-thumb').forEach((t,i)=>t.classList.toggle('active',i===idx));
+}
+function emptyTab(label){return `<div class="empty-state"><svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><h3>${label} 없음</h3><p>관리자 페이지에서 등록하세요</p></div>`;}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape')closeModal();
+  if((e.metaKey||e.ctrlKey)&&e.key==='k'){document.getElementById('searchInput').focus();e.preventDefault();}
+});
+</script>
+</body>
+</html>
