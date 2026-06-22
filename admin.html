@@ -287,12 +287,13 @@
 
   <!-- 이미지 등록 -->
   <div class="section">
-    <div class="section-title"><div class="dot" style="background:var(--warning)"></div>이미지 파일 경로 등록</div>
+    <div class="section-title"><div class="dot" style="background:var(--warning)"></div>이미지 파일명 등록</div>
 
     <div class="naming-guide">
-      💡 GitHub <code>images/</code> 폴더에 업로드한 파일명을 입력하세요.<br>
-      분해도: <code>images/AF-550K_diagram_01.jpg</code> &nbsp;|&nbsp;
-      수리사진: <code>images/AF-550K_repair_01.jpg</code>
+      💡 GitHub 저장소 루트에 업로드한 <strong style="color:var(--text)">파일명만</strong> 입력하세요. (경로 불필요)<br>
+      분해도: <code>AF-550K_diagram_01.jpg</code> &nbsp;|&nbsp;
+      수리사진: <code>AF-550K_repair_01.jpg</code><br>
+      <span style="color:var(--text3);font-size:11px;">※ 권장 파일명 형식: 모델명_용도_번호.jpg &nbsp;예) AF-550K_diagram_01.jpg</span>
     </div>
 
     <div class="img-block">
@@ -643,7 +644,7 @@ function addImgEntry(type) {
   entry.innerHTML=`
     <span class="img-entry-num">${idx+1}</span>
     ${tagHtml}
-    <input type="text" placeholder="images/파일명.jpg" data-imgtype="${type}">
+    <input type="text" placeholder="${type==='diagram'?'AF-550K_diagram_01.jpg':'AF-550K_repair_01.jpg'}" data-imgtype="${type}">
     <button class="btn-icon" onclick="removeImgEntry(this)" title="삭제">
       <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>`;
