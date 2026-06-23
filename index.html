@@ -268,7 +268,7 @@ function renderGrid() {
         ${diagrams[0]
           ? `<img src="${diagrams[0].file}" alt="${p.name}" loading="lazy" onerror="this.parentNode.innerHTML='<div class=no-img>이미지 없음</div>'">`
           : `<div class="no-img"><svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><div style="margin-top:4px">이미지 없음</div></div>`}
-        <div class="card-cat-badge">${p.category}</div>
+        <div class="card-cat-badge">${p.symptom||p.category}</div>
         <div class="card-badge">${diagrams.length+photos.length}장</div>
       </div>
       <div class="card-body">

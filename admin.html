@@ -327,6 +327,12 @@
     <div class="section-title"><div class="dot" style="background:var(--success)"></div>설명 및 부품 정보</div>
     <div class="form-row">
       <div class="form-group">
+        <label class="form-label">불량증상 <span style="color:var(--text3);font-weight:400">(카드 배지에 표시됩니다)</span></label>
+        <input class="form-input" id="rSymptom" placeholder="예: 전원 불량, 히팅 불량, 팬 소음">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
         <label class="form-label">제품 설명 / 수리 포인트</label>
         <textarea class="form-textarea" id="rDesc" rows="5" placeholder="초보 엔지니어를 위한 설명&#13;&#10;- 주의사항&#13;&#10;- 자주 발생하는 고장 유형&#13;&#10;- 교체 부품 정보"></textarea>
       </div>
@@ -739,6 +745,7 @@ function saveProduct() {
 
   const images  = getImageEntries();
   const desc    = document.getElementById('rDesc').value.trim();
+  const symptom = document.getElementById('rSymptom').value.trim();
   const parts   = getPartEntries();
 
   const record = {
@@ -748,7 +755,7 @@ function saveProduct() {
     name: masterProduct.name,
     model: masterProduct.model,
     masterId: masterProduct.id,
-    desc, parts, images
+    desc, symptom, parts, images
   };
 
   if (editingIndex>=0) {
@@ -782,6 +789,7 @@ function editProduct(i) {
       onProductSelect();
     },50);
   },50);
+  document.getElementById('rSymptom').value=p.symptom||'';
   document.getElementById('rDesc').value=p.desc||'';
   setPartEntries(p.parts||[]);
   setImageEntries(p.images||[]);
@@ -804,6 +812,7 @@ function clearRegisterForm() {
   document.getElementById('rCategory').disabled=true;
   document.getElementById('rProduct').innerHTML='<option value="">-- 제품 선택 --</option>';
   document.getElementById('rProduct').disabled=true;
+  document.getElementById('rSymptom').value='';
   document.getElementById('rDesc').value='';
   document.getElementById('partsList').innerHTML='';
   document.getElementById('diagramList').innerHTML='';
