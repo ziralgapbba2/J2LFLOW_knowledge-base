@@ -123,6 +123,13 @@
   .info-box{background:rgba(61,214,140,.06);border:1px solid rgba(61,214,140,.2);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--text2);margin-bottom:14px;}
   .info-box strong{color:var(--success);}
   .code-block{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text2);overflow:auto;max-height:220px;white-space:pre;line-height:1.6;}
+  .part-entry{display:flex;gap:6px;align-items:center;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:7px 10px;}
+  .part-entry input{background:transparent;border:none;color:var(--text);font-size:12px;font-family:inherit;outline:none;}
+  .part-entry input::placeholder{color:var(--text3);}
+  .part-entry .p-num{width:40px;text-align:center;font-family:'JetBrains Mono',monospace;border-right:1px solid var(--border);padding-right:8px;flex-shrink:0;}
+  .part-entry .p-name{flex:2;}
+  .part-entry .p-code{flex:1;font-family:'JetBrains Mono',monospace;font-size:11px;border-left:1px solid var(--border);padding-left:8px;}
+
   .empty-state{text-align:center;padding:28px;color:var(--text3);font-size:13px;}
   .toast{position:fixed;bottom:24px;right:24px;z-index:999;background:var(--success);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:500;transform:translateY(60px);opacity:0;transition:all .25s;pointer-events:none;}
   .toast.show{transform:translateY(0);opacity:1;}
@@ -326,8 +333,9 @@
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">주요 부품 목록 — 번호,부품명,부품코드 (한 줄씩)</label>
-        <textarea class="form-textarea" id="rParts" rows="4" placeholder="1,실리콘 발판,SFP-001&#13;&#10;2,전면 판넬,FPN-002&#13;&#10;3,히팅 튜브,HTB-003"></textarea>
+        <label class="form-label">주요 부품 목록</label>
+        <div id="partsList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;"></div>
+        <button class="add-btn" onclick="addPartEntry()">＋ 부품 추가</button>
       </div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -360,6 +368,10 @@
     <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
       <button class="btn btn-success" onclick="downloadJson()">📥 data.json 다운로드</button>
       <button class="btn btn-outline" onclick="copyJson()">📋 JSON 복사</button>
+      <label class="btn btn-outline" style="cursor:pointer">
+        📂 data.json 불러오기
+        <input type="file" accept=".json" style="display:none" onchange="loadData(event)">
+      </label>
     </div>
     <div class="code-block" id="jsonPreview"></div>
   </div>
@@ -629,6 +641,44 @@ function hideProductInfo() {
 }
 
 // ══════════════════════════════════════
+// 부품 행 추가/삭제
+// ══════════════════════════════════════
+function addPartEntry(num='', name='', code='') {
+  const list = document.getElementById('partsList');
+  const idx = list.children.length + 1;
+  const entry = document.createElement('div');
+  entry.className = 'part-entry';
+  entry.innerHTML = `
+    <input class="p-num" type="text" placeholder="번호" value="${num||idx}" maxlength="4">
+    <input class="p-name" type="text" placeholder="부품명 (필수)" value="${name}">
+    <input class="p-code" type="text" placeholder="부품코드" value="${code}">
+    <button class="btn-icon" onclick="this.closest('.part-entry').remove();reNumberParts()" title="삭제">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>`;
+  list.appendChild(entry);
+}
+function reNumberParts() {
+  document.querySelectorAll('#partsList .part-entry').forEach((el,i)=>{
+    const numInput = el.querySelector('.p-num');
+    if (!numInput.value || !isNaN(numInput.value)) numInput.value = i+1;
+  });
+}
+function getPartEntries() {
+  const parts = [];
+  document.querySelectorAll('#partsList .part-entry').forEach(el=>{
+    const num  = el.querySelector('.p-num').value.trim();
+    const name = el.querySelector('.p-name').value.trim();
+    const code = el.querySelector('.p-code').value.trim();
+    if (name) parts.push({num, name, code});
+  });
+  return parts;
+}
+function setPartEntries(parts) {
+  document.getElementById('partsList').innerHTML = '';
+  if (parts.length) parts.forEach(pt => addPartEntry(pt.num, pt.name, pt.code));
+}
+
+// ══════════════════════════════════════
 // 자료 등록 — 이미지 항목
 // ══════════════════════════════════════
 function addImgEntry(type) {
@@ -689,11 +739,7 @@ function saveProduct() {
 
   const images  = getImageEntries();
   const desc    = document.getElementById('rDesc').value.trim();
-  const partsRaw= document.getElementById('rParts').value.trim();
-  const parts   = partsRaw?partsRaw.split('\n').filter(Boolean).map(line=>{
-    const [num,pname,code]=(line+',,,').split(',');
-    return {num:num.trim(),name:pname.trim(),code:code.trim()};
-  }).filter(p=>p.name):[];
+  const parts   = getPartEntries();
 
   const record = {
     id: editingIndex>=0 ? products[editingIndex].id : Date.now(),
@@ -737,7 +783,7 @@ function editProduct(i) {
     },50);
   },50);
   document.getElementById('rDesc').value=p.desc||'';
-  document.getElementById('rParts').value=(p.parts||[]).map(pt=>`${pt.num},${pt.name},${pt.code||''}`).join('\n');
+  setPartEntries(p.parts||[]);
   setImageEntries(p.images||[]);
   document.getElementById('rSaveBtn').textContent='✏️ 수정 저장';
   document.getElementById('rCancelBtn').style.display='';
@@ -759,7 +805,7 @@ function clearRegisterForm() {
   document.getElementById('rProduct').innerHTML='<option value="">-- 제품 선택 --</option>';
   document.getElementById('rProduct').disabled=true;
   document.getElementById('rDesc').value='';
-  document.getElementById('rParts').value='';
+  document.getElementById('partsList').innerHTML='';
   document.getElementById('diagramList').innerHTML='';
   document.getElementById('photoList').innerHTML='';
   addImgEntry('diagram');
@@ -836,6 +882,23 @@ function loadMaster(e) {
       master=JSON.parse(ev.target.result);
       renderAll();
       showToast('master.json 불러오기 완료!');
+    } catch { showToast('파일 형식이 올바르지 않습니다','error'); }
+  };
+  reader.readAsText(file);
+}
+function loadData(e) {
+  const file=e.target.files[0];
+  if (!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try {
+      const parsed=JSON.parse(ev.target.result);
+      if (!parsed.products) throw new Error('products 키가 없습니다');
+      if (products.length>0 && !confirm(`기존에 등록된 자료 ${products.length}개가 있습니다.\n불러온 데이터로 덮어쓸까요?`)) return;
+      products=parsed.products;
+      renderProductList();
+      updateJsonPreview();
+      showToast(`data.json 불러오기 완료! (${products.length}개)`);
     } catch { showToast('파일 형식이 올바르지 않습니다','error'); }
   };
   reader.readAsText(file);
