@@ -188,7 +188,11 @@ let selectedCategory = null;
 let currentProduct = null;
 let currentTab = 'diagram';
 
-// data.json 로드
+// 파일명 공백 등 특수문자 URL 인코딩
+function encodeFilePath(filePath) {
+  if (!filePath) return '';
+  return filePath.split('/').map(segment => encodeURIComponent(segment)).join('/');
+}
 fetch('data.json')
   .then(r => r.json())
   .then(data => {
@@ -266,7 +270,7 @@ function renderGrid() {
     card.innerHTML=`
       <div class="card-thumb">
         ${diagrams[0]
-          ? `<img src="${diagrams[0].file}" alt="${p.name}" loading="lazy" onerror="this.parentNode.innerHTML='<div class=no-img>이미지 없음</div>'">`
+          ? `<img src="${encodeFilePath(diagrams[0].file)}" alt="${p.name}" loading="lazy" onerror="this.parentNode.innerHTML='<div class=no-img>이미지 없음</div>'">`
           : `<div class="no-img"><svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><div style="margin-top:4px">이미지 없음</div></div>`}
         <div class="card-cat-badge">${p.symptom||p.category}</div>
         <div class="card-badge">${diagrams.length+photos.length}장</div>
@@ -334,10 +338,10 @@ function switchTab(tab) {
 function renderViewer(images, label) {
   const thumbs = images.map((img,i)=>`
     <div class="img-thumb ${i===0?'active':''}" onclick="switchImg(${i})" id="thumb_${i}">
-      <img src="${img.file}" loading="lazy" onerror="this.src=''">
+      <img src="${encodeFilePath(img.file)}" loading="lazy" onerror="this.src=''">
     </div>`).join('');
   return `
-    <div class="img-viewer"><img src="${images[0].file}" id="mainImg" alt="${label}"></div>
+    <div class="img-viewer"><img src="${encodeFilePath(images[0].file)}" id="mainImg" alt="${label}"></div>
     <div class="img-caption">${label} · 클릭하면 확대 / 썸네일로 전환</div>
     ${images.length>1?`<div class="img-thumbs">${thumbs}</div>`:''}`;
 }
@@ -345,7 +349,7 @@ function switchImg(idx) {
   const imgs = (currentTab==='diagram')
     ? (currentProduct.images||[]).filter(i=>i.tag==='분해도')
     : (currentProduct.images||[]).filter(i=>i.tag==='수리사진');
-  document.getElementById('mainImg').src = imgs[idx].file;
+  document.getElementById('mainImg').src = encodeFilePath(imgs[idx].file);
   document.querySelectorAll('.img-thumb').forEach((t,i)=>t.classList.toggle('active',i===idx));
 }
 function emptyTab(label){return `<div class="empty-state"><svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><h3>${label} 없음</h3><p>관리자 페이지에서 등록하세요</p></div>`;}
